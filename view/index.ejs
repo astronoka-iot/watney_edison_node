@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<script>
+var IndexPage = function(){};
+IndexPage.prototype.ws = new WebSocket('wss://secure.sakura.ad.jp/iot-alpha/ws/f6002daf-d2fa-4ceb-a467-6c047b374f1c');
+IndexPage.prototype.init = function(){
+  console.log("init");
+  var _this = this;
+
+  /* ws init */
+  this.wsInit();
+
+  $("#btnF").click(function(){_this.clickBtnCmd("f");});
+  $("#btnB").click(function(){_this.clickBtnCmd("b");});
+  $("#btnU").click(function(){_this.clickBtnCmd("u");});
+  $("#btnD").click(function(){_this.clickBtnCmd("d");});
+};
+
+IndexPage.prototype.clickBtnCmd = function(cmd){
+  $.get("/api/cmd/"+cmd,{},function(data){
+    console.log(data);
+  });
+};
+
+IndexPage.prototype.wsInit = function(cmd){
+  var _this = this;
+  this.ws.onmessage = function(e){
+    console.log(e.data);
+  };
+  this.ws.onclose = function(){
+    console.log('Close');
+  };
+  this.ws.onopen = function(){
+    console.log('Open');
+  };
+  this.ws.onerror = function(event) {
+    console.log('Error');
+  };
+  this.ws.onmessage = (ev) => {
+    const data = JSON.parse(ev.data);
+    console.log(data);
+    var dateTime = data.datetime;
+    $("#txtDateTime").val( dateTime );
+    $("#txtMoisture").val(data.payload.channels[0].value);
+    $("#txtTemperature").val("0.0");
+
+    var t = (new Date()).getTime();
+    $("#imgCamera").attr("src","./photo320x320.jpg?t="+t);
+  };
+};
+
+var p = new IndexPage();
+$(function(){
+  p.init();
+});
+</script>
+<style>
+body {
+    text-align: center;
+}
+ul {
+  list-style-type: none;
+}
+input[type=button]{
+  width:100%;
+  font-size:1.4em;
+}
+#imgCameraContainer{
+  width: 100%;
+}
+img#cameraImg{
+  width: 320px;
+  height: 320px;
+}
+</style>
+</head>
+<body>
+  <ul>
+    <li><input type="button" value="前" id="btnF"></li>
+    <li><input type="button" value="後" id="btnB"></li>
+    <li><input type="button" value="アーム UP" id="btnU"></li>
+    <li><input type="button" value="アーム DOWN" id="btnD"></li>
+  </ul>
+  <div id="imgCameraContainer">
+    <img id="imgCamera" src="https://placehold.jp/320x320.png">
+  </div>
+  <div>
+    <ul id="data">
+      <li><label>時間</label><p id="txtDateTime">00:00</p></li>
+      <li><label>土壌水分</label><p id="txtMoisture">0.0</p></li>
+      <li><label>土壌温度</label><p id="txtTemperature">0.0</p></li>
+    </li>
+  </div>
+</body>
+</html>
